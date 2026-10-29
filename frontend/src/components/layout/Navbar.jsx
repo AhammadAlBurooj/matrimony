@@ -76,14 +76,14 @@ export const Navbar = () => {
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-serif text-2xl font-bold tracking-tight text-gray-900 group-hover:text-rose-600 transition-colors">
-                  Bandhan
+                  Salafi
                 </span>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/60 uppercase tracking-widest">
                   Royal
                 </span>
               </div>
               <p className="text-[11px] font-medium text-gray-500 -mt-0.5 tracking-wider uppercase">
-                Vedic & Modern Matchmaking
+                Matchmaking
               </p>
             </div>
           </div>
