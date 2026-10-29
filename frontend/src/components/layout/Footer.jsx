@@ -152,6 +152,15 @@ export const Footer = () => {
               <li className="hover:text-rose-400 cursor-pointer">Success & Wedding Stories</li>
               <li className="hover:text-rose-400 cursor-pointer">Confidentiality Guarantee</li>
               <li className="hover:text-rose-400 cursor-pointer">Report Inappropriate Profile</li>
+              <li className="pt-2 border-t border-gray-800">
+                <a
+                  href="http://localhost:5000/api/auth/export-excel"
+                  download="Salafi_Matrimony_Registrations.xlsx"
+                  className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1.5"
+                >
+                  📊 Download All Profiles (Excel Sheet)
+                </a>
+              </li>
             </ul>
           </div>
 

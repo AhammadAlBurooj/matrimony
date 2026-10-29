@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { Sparkles, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
 
 export const CallToActionSection = () => {
-  const { navigateTo } = useApp();
+  const { navigateTo, openAuthModal, currentUser } = useApp();
 
   return (
     <section className="py-20 bg-white">
@@ -30,7 +30,7 @@ export const CallToActionSection = () => {
 
             <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
               <button
-                onClick={() => navigateTo('profile-builder')}
+                onClick={() => currentUser ? navigateTo('profile-builder') : openAuthModal('register')}
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-extrabold text-sm shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
               >
                 <span>Register Your Free Profile</span>
