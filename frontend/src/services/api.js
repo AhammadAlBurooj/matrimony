@@ -1,10 +1,12 @@
 // Centralized API client for Matrimony backend
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || 'http://localhost:5001/api';
+
+export { API_BASE_URL };
 
 /**
  * Register a new user
- * @param {Object} data - { name, email, phone, password, gender }
+ * @param {Object} data - { name, email, phone, password, gender, profile }
  */
 export async function registerUser(data) {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -100,4 +102,108 @@ export async function getProfileById(id) {
   return await response.json();
 }
 
+/**
+ * Update user profile
+ * @param {string} id - User ID
+ * @param {Object} data - Profile update payload
+ */
+export async function updateUserProfile(id, data) {
+  const response = await fetch(`${API_BASE_URL}/profiles/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
 
+  const resJson = await response.json();
+  if (!response.ok) {
+    throw new Error(resJson.error || 'Failed to update profile.');
+  }
+  return resJson;
+}
+
+/**
+ * Send an Invite / Express Interest
+ * @param {Object} payload - { senderId, receiverId, senderName, receiverName }
+ */
+export async function sendInvite(payload) {
+  const response = await fetch(`${API_BASE_URL}/interests/send`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const resJson = await response.json();
+  if (!response.ok) {
+    throw new Error(resJson.error || 'Failed to send invite.');
+  }
+  return resJson;
+}
+
+/**
+ * Get Sent Invitations
+ * @param {string} userId
+ */
+export async function getSentInvites(userId) {
+  const response = await fetch(`${API_BASE_URL}/interests/sent/${userId}`);
+  if (!response.ok) return [];
+  return await response.json();
+}
+
+/**
+ * Get Received Invitations
+ * @param {string} userId
+ */
+export async function getReceivedInvites(userId) {
+  const response = await fetch(`${API_BASE_URL}/interests/received/${userId}`);
+  if (!response.ok) return [];
+  return await response.json();
+}
+
+/**
+ * Accept Invitation
+ */
+export async function acceptInvite(interestId, userId) {
+  const response = await fetch(`${API_BASE_URL}/interests/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ interestId, userId }),
+  });
+  return await response.json();
+}
+
+/**
+ * Decline Invitation
+ */
+export async function declineInvite(interestId) {
+  const response = await fetch(`${API_BASE_URL}/interests/decline`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ interestId }),
+  });
+  return await response.json();
+}
+
+/**
+ * Get User Notifications
+ */
+export async function getNotifications(userId) {
+  const response = await fetch(`${API_BASE_URL}/interests/notifications/${userId}`);
+  if (!response.ok) return [];
+  return await response.json();
+}
+
+/**
+ * Mark notifications as read
+ */
+export async function markNotificationsAsRead(userId, notifId = null) {
+  const response = await fetch(`${API_BASE_URL}/interests/notifications/read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, notifId }),
+  });
+  return await response.json();
+}

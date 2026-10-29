@@ -1,0 +1,15 @@
+{
+  "name": "bandhan-matrimony-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bandhan Matrimony & Matchmaking Platform",
+  "scripts": {
+    "start": "npm --prefix frontend run dev",
+    "dev": "npm --prefix frontend run dev",
+    "frontend": "npm --prefix frontend run dev",
+    "backend": "npm --prefix Backend run dev",
+    "start:backend": "npm --prefix Backend start",
+    "start:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
   Heart,
@@ -13,7 +13,13 @@ import {
   LogIn,
   UserPlus,
   LogOut,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Bell,
+  Send,
+  CheckCircle2,
+  Sparkles,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -24,11 +30,32 @@ export const Navbar = () => {
     shortlistedIds,
     currentUser,
     logout,
-    openAuthModal
+    openAuthModal,
+    notifications,
+    unreadNotificationsCount,
+    markAllNotificationsRead
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Close popups on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const pendingInterestsCount = receivedInterests.length;
   const shortlistCount = shortlistedIds.length;
@@ -39,19 +66,19 @@ export const Navbar = () => {
       id: 'browse',
       label: 'Browse Matches',
       icon: Search,
-      badge: 'New'
+      badge: 'Active'
     },
     {
       id: 'connections',
-      label: 'Connections & Chats',
+      label: 'Invites & Connections',
       icon: MessageCircle,
       badgeCount: pendingInterestsCount
     },
     {
       id: 'profile-builder',
-      label: 'My Profile',
+      label: 'My Profile & Edit',
       icon: User,
-      subtext: currentUser ? `${currentUser.completionRate || 85}% Done` : null
+      subtext: currentUser ? `${currentUser.completionRate || 95}% Complete` : null
     }
   ];
 
@@ -59,10 +86,11 @@ export const Navbar = () => {
     navigateTo(pageId);
     setMobileMenuOpen(false);
     setProfileDropdownOpen(false);
+    setNotificationsOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-rose-100/80 shadow-xs transition-all duration-200">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-rose-100/80 shadow-xs transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
@@ -128,7 +156,95 @@ export const Navbar = () => {
           </nav>
 
           {/* Right Action Icons & User Dropdown */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2.5">
+            {/* Notification Bell with Dropdown */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => {
+                  setNotificationsOpen(!notificationsOpen);
+                  setProfileDropdownOpen(false);
+                }}
+                title="Notifications & Invites"
+                className="relative p-2.5 rounded-xl text-gray-600 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown Panel */}
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-84 sm:w-96 rounded-2xl bg-white shadow-2xl border border-gray-100 py-3 z-50 overflow-hidden">
+                  <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-rose-600" />
+                      <h4 className="text-sm font-bold text-gray-900">Notifications & Invites</h4>
+                    </div>
+                    {unreadNotificationsCount > 0 && (
+                      <button
+                        onClick={markAllNotificationsRead}
+                        className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-gray-400 text-xs">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.slice(0, 7).map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-3.5 hover:bg-gray-50/80 transition-colors flex items-start gap-3 ${
+                            !n.read ? 'bg-rose-50/30' : ''
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                            n.type === 'interest_sent' ? 'bg-amber-100 text-amber-700' :
+                            n.type === 'interest_accepted' ? 'bg-emerald-100 text-emerald-700' :
+                            n.type === 'interest_received' ? 'bg-rose-100 text-rose-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {n.type === 'interest_sent' ? <Send className="w-4 h-4" /> :
+                             n.type === 'interest_accepted' ? <CheckCircle2 className="w-4 h-4" /> :
+                             n.type === 'interest_received' ? <Heart className="w-4 h-4 fill-rose-600" /> :
+                             <Sparkles className="w-4 h-4" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-bold text-gray-900 truncate">{n.title}</p>
+                              {!n.read && <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>}
+                            </div>
+                            <p className="text-xs text-gray-600 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 inline-block">
+                              {n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="p-2 border-t border-gray-100 bg-gray-50/50 text-center">
+                    <button
+                      onClick={() => handleNavClick('connections')}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View All in Invites & Connections</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Shortlist Quick Icon */}
             <button
               onClick={() => handleNavClick('browse')}
@@ -145,7 +261,7 @@ export const Navbar = () => {
 
             {/* Excel Sheet Download Button */}
             <a
-              href="http://localhost:5000/api/auth/export-excel"
+              href="http://localhost:5001/api/auth/export-excel"
               target="_blank"
               rel="noopener noreferrer"
               download="Salafi_Matrimony_Registrations.xlsx"
@@ -153,14 +269,17 @@ export const Navbar = () => {
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100 hover:text-emerald-800 transition-all cursor-pointer shadow-xs"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">Excel Sheet</span>
+              <span className="hidden sm:inline">Excel</span>
             </a>
 
             {/* If Authenticated: User Capsule */}
             {currentUser ? (
-              <div className="relative">
+              <div className="relative" ref={profileRef}>
                 <button
-                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  onClick={() => {
+                    setProfileDropdownOpen(!profileDropdownOpen);
+                    setNotificationsOpen(false);
+                  }}
                   className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full border border-gray-200 hover:border-rose-200 hover:bg-rose-50/50 transition-all cursor-pointer"
                 >
                   <img
@@ -173,7 +292,7 @@ export const Navbar = () => {
                       {currentUser.name}
                     </p>
                     <p className="text-[10px] text-amber-600 font-medium leading-tight">
-                      {currentUser.membership || 'Gold Member'}
+                      {currentUser.membership || 'Royal Member'}
                     </p>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
@@ -184,40 +303,40 @@ export const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white shadow-xl border border-gray-100 py-2.5 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-sm font-bold text-gray-900">{currentUser.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{currentUser.email || currentUser.phone}</p>
                       <div className="mt-2 w-full bg-gray-100 rounded-full h-1.5">
                         <div
                           className="bg-rose-600 h-1.5 rounded-full"
-                          style={{ width: `${currentUser.completionRate || 85}%` }}
+                          style={{ width: `${currentUser.completionRate || 95}%` }}
                         ></div>
                       </div>
                       <span className="text-[10px] text-gray-500 mt-1 inline-block">
-                        Profile {currentUser.completionRate || 85}% complete
+                        Profile {currentUser.completionRate || 95}% complete
                       </span>
                     </div>
 
                     <button
                       onClick={() => handleNavClick('profile-builder')}
-                      className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-700 bg-rose-50/50 hover:bg-rose-50 flex items-center gap-2 cursor-pointer"
                     >
-                      <User className="w-4 h-4 text-gray-400" />
-                      Edit Profile & Preferences
+                      <User className="w-4 h-4 text-rose-600" />
+                      Edit My Profile & Preferences
                     </button>
                     <button
                       onClick={() => handleNavClick('connections')}
                       className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-600 flex items-center gap-2 cursor-pointer"
                     >
                       <MessageCircle className="w-4 h-4 text-gray-400" />
-                      Chats & Received Requests
+                      Invites & Connections ({pendingInterestsCount})
                     </button>
 
                     <a
-                      href="http://localhost:5000/api/auth/export-excel"
+                      href="http://localhost:5001/api/auth/export-excel"
                       download="Salafi_Matrimony_Registrations.xlsx"
                       className="w-full text-left px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 cursor-pointer"
                     >
                       <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                      Export All Data to Excel (.xlsx)
+                      Export Data to Excel (.xlsx)
                     </a>
                     
                     <div className="border-t border-gray-100 mt-1 pt-1">
@@ -258,104 +377,102 @@ export const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex items-center gap-2 lg:hidden">
+            {/* Mobile notification bell */}
             <button
               onClick={() => handleNavClick('connections')}
-              className="p-2 rounded-lg text-gray-600 relative cursor-pointer"
+              className="relative p-2 text-gray-700 hover:text-rose-600"
             >
-              <MessageCircle className="w-5 h-5" />
-              {pendingInterestsCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
-                  {pendingInterestsCount}
+              <Bell className="w-5 h-5" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadNotificationsCount}
                 </span>
               )}
             </button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-gray-700 hover:bg-gray-100 focus:outline-hidden cursor-pointer"
+              className="p-2 rounded-xl text-gray-700 hover:bg-gray-100"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100 space-y-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentPage === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
-                    isActive
-                      ? 'bg-rose-50 text-rose-700 font-bold'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-rose-600' : 'text-gray-400'}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badgeCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-xs font-bold">
-                      {item.badgeCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Mobile Auth Actions */}
-            <div className="pt-3 border-t border-gray-100 px-2 space-y-2">
-              <a
-                href="http://localhost:5000/api/auth/export-excel"
-                download="Salafi_Matrimony_Registrations.xlsx"
-                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-b border-gray-200 bg-white px-4 pt-3 pb-6 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentPage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium ${
+                  isActive ? 'bg-rose-50 text-rose-700 font-bold' : 'text-gray-700'
+                }`}
               >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                <span>Download Excel Sheet (.xlsx)</span>
-              </a>
-              {currentUser ? (
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </div>
+                {item.badgeCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-xs font-bold">
+                    {item.badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
+            <button
+              onClick={() => handleNavClick('profile-builder')}
+              className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs"
+            >
+              <User className="w-4 h-4" />
+              <span>Edit My Profile</span>
+            </button>
+
+            {currentUser ? (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-bold"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out ({currentUser.name})</span>
+              </button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    logout();
+                    openAuthModal('login');
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gray-100 text-gray-700 font-bold text-xs"
+                  className="py-2.5 text-center text-xs font-bold border border-gray-200 rounded-xl"
                 >
-                  <LogOut className="w-4 h-4 text-rose-600" />
-                  <span>Sign Out ({currentUser.name})</span>
+                  Sign In
                 </button>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      openAuthModal('login');
-                    }}
-                    className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-700 font-bold text-xs text-center"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      openAuthModal('register');
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs text-center shadow-xs"
-                  >
-                    Register Free
-                  </button>
-                </div>
-              )}
-            </div>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    openAuthModal('register');
+                  }}
+                  className="py-2.5 text-center text-xs font-bold bg-rose-600 text-white rounded-xl shadow-xs"
+                >
+                  Register Free
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 };

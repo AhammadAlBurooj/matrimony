@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const excelService = require('../services/excelService');
 
 // Get Registered Profiles with Dynamic Filters
 router.get('/', async (req, res) => {
@@ -29,12 +30,12 @@ router.get('/', async (req, res) => {
       // Default high-quality portraits
       const defaultPhotos = isSister
         ? [
-            // 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800',
-            // 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=800'
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=800'
           ]
         : [
-            // 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800',
-            // 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800'
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800',
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800'
           ];
 
       return {
@@ -80,14 +81,14 @@ router.get('/', async (req, res) => {
           otherExpectations: p.otherExpectations || ''
         },
         verified: true,
-        matchScore: Math.min(98, 88 + (idx * 2) % 11),
-        photos: p.photos || defaultPhotos,
+        matchScore: Math.min(99, 88 + (idx * 3) % 11),
+        photos: (p.photos && p.photos.length > 0) ? p.photos : defaultPhotos,
         created_at: u.created_at
       };
     });
 
-    // 1. Filter by Gender (Seeking Bride => show female; Seeking Groom => show male)
-    if (gender) {
+    // 1. Filter by Gender (Seeking Bride => show female; Seeking Groom => show male; All => show both)
+    if (gender && gender.toLowerCase() !== 'all') {
       const g = gender.toLowerCase();
       profiles = profiles.filter((p) => {
         if (g === 'female' || g === 'sister' || g === 'bride') {
@@ -234,12 +235,90 @@ router.get('/:id', async (req, res) => {
       },
       verified: true,
       matchScore: 92,
-      photos: p.photos || defaultPhotos,
+      photos: (p.photos && p.photos.length > 0) ? p.photos : defaultPhotos,
       created_at: u.created_at
     };
 
     res.json(profile);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update Registered Profile (Edit Profile API)
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  try {
+    const localDb = db.getLocalDb();
+    const userIndex = (localDb.users || []).findIndex((u) => u.id === id);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    const existingUser = localDb.users[userIndex];
+    const existingProfile = existingUser.profile || {};
+
+    // Merge updates into profile
+    const updatedProfile = {
+      ...existingProfile,
+      ...(updates.profile || {}),
+      dobOrAge: updates.dobOrAge || updates.age || updates.profile?.dobOrAge || existingProfile.dobOrAge,
+      gender: updates.gender || updates.profile?.gender || existingProfile.gender || existingUser.gender,
+      currentLocation: updates.city || updates.currentLocation || updates.profile?.currentLocation || existingProfile.currentLocation,
+      occupation: updates.occupation || updates.profile?.occupation || existingProfile.occupation,
+      educationQualification: updates.education || updates.educationQualification || updates.profile?.educationQualification || existingProfile.educationQualification,
+      monthlyIncome: updates.monthlyIncome || updates.income || updates.profile?.monthlyIncome || existingProfile.monthlyIncome,
+      height: updates.height || updates.profile?.height || existingProfile.height,
+      maritalStatus: updates.maritalStatus || updates.profile?.maritalStatus || existingProfile.maritalStatus,
+      manhaj: updates.manhaj || updates.profile?.manhaj || existingProfile.manhaj,
+      prayerPractice: updates.prayerPractice || updates.profile?.prayerPractice || existingProfile.prayerPractice,
+      bio: updates.bio !== undefined ? updates.bio : existingProfile.bio,
+      nativePlace: updates.nativePlace || updates.profile?.nativePlace || existingProfile.nativePlace,
+      country: updates.country || updates.profile?.country || existingProfile.country || 'India',
+      languagesKnown: updates.languagesKnown || updates.profile?.languagesKnown || existingProfile.languagesKnown,
+      hijabOrBeardPreference: updates.hijabOrBeardPreference || updates.profile?.hijabOrBeardPreference || existingProfile.hijabOrBeardPreference,
+      fatherOccupation: updates.fatherOccupation || updates.profile?.fatherOccupation || existingProfile.fatherOccupation,
+      motherOccupation: updates.motherOccupation || updates.profile?.motherOccupation || existingProfile.motherOccupation,
+      siblingsCount: updates.siblingsCount || updates.profile?.siblingsCount || existingProfile.siblingsCount,
+      familyBackground: updates.familyBackground || updates.profile?.familyBackground || existingProfile.familyBackground,
+      guardianContact: updates.guardianContact || updates.profile?.guardianContact || existingProfile.guardianContact,
+      preferredAgeRange: updates.preferredAgeRange || updates.profile?.preferredAgeRange || existingProfile.preferredAgeRange,
+      preferredLocation: updates.preferredLocation || updates.profile?.preferredLocation || existingProfile.preferredLocation,
+      preferredEducation: updates.preferredEducation || updates.profile?.preferredEducation || existingProfile.preferredEducation,
+      religiousCompatibility: updates.religiousCompatibility || updates.profile?.religiousCompatibility || existingProfile.religiousCompatibility,
+      otherExpectations: updates.otherExpectations || updates.profile?.otherExpectations || existingProfile.otherExpectations,
+      photos: updates.photos || updates.profile?.photos || existingProfile.photos || []
+    };
+
+    const updatedUser = {
+      ...existingUser,
+      name: updates.name || existingUser.name,
+      phone: updates.phone || existingUser.phone,
+      email: updates.email || existingUser.email,
+      gender: updates.gender || updatedProfile.gender || existingUser.gender,
+      profile: updatedProfile,
+      updated_at: new Date().toISOString()
+    };
+
+    localDb.users[userIndex] = updatedUser;
+    db.saveLocalDb(localDb);
+
+    // Keep Excel updated
+    try {
+      excelService.writeUsersToExcel(localDb.users);
+    } catch (e) {
+      console.warn('[Excel Sync on Update]:', e.message);
+    }
+
+    res.json({
+      message: 'Profile updated successfully!',
+      user: updatedUser
+    });
+  } catch (err) {
+    console.error('Error updating profile:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

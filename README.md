@@ -201,14 +201,16 @@ Now open your browser and navigate to:
 
 ---
 
-### 3. Running Both Concurrently
+### 3. Running Services
 
-For convenience, you can run the backend and frontend in separate terminals:
+You can now run commands directly from the root workspace folder:
 
-| Service | Port | Local URL | Command |
-| :--- | :--- | :--- | :--- |
-| **Backend API** | `5000` | `http://localhost:5000` | `cd Backend && npm start` |
-| **Frontend Web** | `5173` | `http://localhost:5173` | `cd frontend && npm run dev` |
+| Service | Port | Local URL | Root Command | Subfolder Command |
+| :--- | :--- | :--- | :--- | :--- |
+| **Frontend Web** | `5173` | `http://localhost:5173` | `npm start` *(or `npm run dev`)* | `cd frontend && npm run dev` |
+| **Backend API** | `5001` | `http://localhost:5001` | `npm run backend` | `cd Backend && npm start` |
+
+*(Note: Port 5001 is used for Backend to prevent conflict with macOS Control Center / AirPlay Receiver on port 5000).*
 
 ---
 
