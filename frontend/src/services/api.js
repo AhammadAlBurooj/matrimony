@@ -63,3 +63,41 @@ export async function getCurrentUser(token) {
   return resJson;
 }
 
+/**
+ * Fetch registered user profiles from backend with optional filters
+ * @param {Object} filters - { gender, minAge, maxAge, religion, caste, city, searchQuery }
+ */
+export async function getRegisteredProfiles(filters = {}) {
+  const params = new URLSearchParams();
+
+  if (filters.gender) params.append('gender', filters.gender);
+  if (filters.minAge) params.append('minAge', filters.minAge);
+  if (filters.maxAge) params.append('maxAge', filters.maxAge);
+  if (filters.religion && filters.religion !== 'All Religions') params.append('religion', filters.religion);
+  if (filters.caste && filters.caste !== 'All Communities') params.append('caste', filters.caste);
+  if (filters.city && filters.city !== 'All Locations') params.append('city', filters.city);
+  if (filters.searchQuery) params.append('searchQuery', filters.searchQuery);
+
+  const url = `${API_BASE_URL}/profiles?${params.toString()}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch registered profiles');
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch single profile by ID
+ * @param {string} id
+ */
+export async function getProfileById(id) {
+  const response = await fetch(`${API_BASE_URL}/profiles/${id}`);
+  if (!response.ok) {
+    throw new Error('Profile not found');
+  }
+  return await response.json();
+}
+
+

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { MOCK_PROFILES } from '../data/mockData';
+import { getRegisteredProfiles } from '../services/api';
 
 const AppContext = createContext(null);
 
@@ -35,11 +36,15 @@ export const AppProvider = ({ children }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
 
+  // Registered profiles from database
+  const [registeredProfiles, setRegisteredProfiles] = useState([]);
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+
   // Search and filter state
   const [searchFilters, setSearchFilters] = useState({
     gender: 'female',
-    minAge: 24,
-    maxAge: 32,
+    minAge: 18,
+    maxAge: 40,
     religion: 'All Religions',
     caste: 'All Communities',
     city: 'All Locations',
@@ -47,6 +52,24 @@ export const AppProvider = ({ children }) => {
     verifiedOnly: false,
     minMatchScore: 85
   });
+
+  // Function to fetch registered profiles based on filters
+  const loadRegisteredProfiles = useCallback(async (filters = searchFilters) => {
+    setIsLoadingProfiles(true);
+    try {
+      const data = await getRegisteredProfiles(filters);
+      setRegisteredProfiles(data);
+    } catch (err) {
+      console.warn('Could not fetch registered profiles from backend:', err.message);
+    } finally {
+      setIsLoadingProfiles(false);
+    }
+  }, [searchFilters]);
+
+  // Load profiles on mount & whenever searchFilters changes
+  useEffect(() => {
+    loadRegisteredProfiles(searchFilters);
+  }, [searchFilters.gender, searchFilters.minAge, searchFilters.maxAge, searchFilters.religion, searchFilters.caste, searchFilters.city, searchFilters.searchQuery]);
 
   // Shortlist and Interests tracking
   const [shortlistedIds, setShortlistedIds] = useState(['BM1026']);
@@ -154,7 +177,7 @@ export const AppProvider = ({ children }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const selectedProfile = MOCK_PROFILES.find((p) => p.id === selectedProfileId) || null;
+  const selectedProfile = registeredProfiles.find((p) => p.id === selectedProfileId) || MOCK_PROFILES.find((p) => p.id === selectedProfileId) || null;
 
   return (
     <AppContext.Provider
@@ -190,7 +213,10 @@ export const AppProvider = ({ children }) => {
         setAuthModalMode,
         openAuthModal,
         closeAuthModal,
-        allProfiles: MOCK_PROFILES
+        allProfiles: registeredProfiles,
+        registeredProfiles,
+        isLoadingProfiles,
+        loadRegisteredProfiles
       }}
     >
       {children}

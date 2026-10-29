@@ -362,8 +362,9 @@ export const SUCCESS_STORIES = [
 
 export const RELIGIONS_LIST = [
   'All Religions',
-  'Hindu',
+  'Islam',
   'Muslim',
+  'Hindu',
   'Sikh',
   'Christian',
   'Jain',
@@ -387,15 +388,19 @@ export const COMMUNITIES_LIST = [
 
 export const CITIES_LIST = [
   'All Locations',
+  'Kerala',
   'Bangalore',
+  'Kozhikode',
+  'Kochi',
+  'Kollam',
+  'Malappuram',
+  'Trivandrum',
   'Mumbai',
   'Delhi NCR',
   'Hyderabad',
   'Chennai',
   'Pune',
-  'Chandigarh',
-  'Kolkata',
-  'Ahmedabad',
+  'UAE / GCC',
   'USA / NRI'
 ];
 
