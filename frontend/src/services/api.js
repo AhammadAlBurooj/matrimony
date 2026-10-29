@@ -62,3 +62,4 @@ export async function getCurrentUser(token) {
 
   return resJson;
 }
+

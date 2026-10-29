@@ -426,3 +426,4 @@ export const AuthModal = () => {
     </div>
   );
 };
+
