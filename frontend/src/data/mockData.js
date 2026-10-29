@@ -373,7 +373,7 @@ export const RELIGIONS_LIST = [
 
 export const COMMUNITIES_LIST = [
   'All Communities',
-  'Brahmin',
+  'Salafi',
   'Khatri / Arora',
   'Agarwal / Marwari',
   'Jat / Rajput',
