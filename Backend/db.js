@@ -28,10 +28,10 @@ if (!fs.existsSync(localDbPath)) {
     users: [
       {
         id: 'usr_demo_101',
-        name: 'Devendra Rathore',
-        email: 'devendra@example.com',
-        phone: '+91 98765 43210',
-        password_hash: '$2a$10$wK1Ww4LzXh5V.nZ1UeWpMe6iFf30mHq83w2Zp4w2yq7y8iJ4iG2mi', // 'Password123'
+        name: 'Ayaan Khan',
+        email: 'ayaan@example.com',
+        phone: '+91 91234 56789',
+        password_hash: '$2a$10$wK1Ww4LzXh5V.nZ1UeWpMe6iFf30mHq83w2Zp4w2yq7y8iJ4iG2mi',
         role: 'USER',
         created_at: new Date().toISOString()
       }
@@ -97,11 +97,12 @@ module.exports = {
       const phone = params[1];
       const password_hash = params[2];
       const name = params[3] || email.split('@')[0];
+      const profileData = params[4] || {};
 
-      // Check unique
-      const existing = db.users.find((u) => u.email === email || u.phone === phone);
+      // Check unique by email or phone
+      const existing = db.users.find((u) => (email && u.email === email) || (phone && u.phone === phone));
       if (existing) {
-        throw new Error('A user with this email or phone number already exists.');
+        throw new Error('A user with this phone number or email already exists.');
       }
 
       const newUser = {
@@ -111,6 +112,7 @@ module.exports = {
         phone,
         password_hash,
         role: 'USER',
+        profile: profileData,
         created_at: new Date().toISOString()
       };
 
@@ -120,10 +122,14 @@ module.exports = {
       return { rows: [newUser], rowCount: 1 };
     }
 
-    // 2. SELECT * FROM users WHERE email = $1 or id = $1
-    if (normalizedText.includes('from users where email =') || normalizedText.includes('from users where id =')) {
-      const target = params[0];
-      const match = db.users.filter((u) => u.email === target || u.id === target);
+    // 2. SELECT * FROM users WHERE (email or phone or id)
+    if (normalizedText.includes('from users where')) {
+      const target = (params[0] || '').toString().trim().toLowerCase();
+      const match = db.users.filter((u) => 
+        (u.email && u.email.toLowerCase() === target) ||
+        (u.phone && u.phone === target) ||
+        (u.id && u.id === target)
+      );
       return { rows: match, rowCount: match.length };
     }
 
