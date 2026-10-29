@@ -4,11 +4,7 @@ import { MOCK_PROFILES } from '../data/mockData';
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'browse' | 'connections' | 'profile-builder'
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
-  // Authentication State
+  // Authentication State loaded from localStorage
   const [authToken, setAuthToken] = useState(() => {
     return localStorage.getItem('bandhan_token') || null;
   });
@@ -22,21 +18,20 @@ export const AppProvider = ({ children }) => {
         return null;
       }
     }
-    // Default logged in demo profile if desired or null
-    return {
-      id: 'usr_demo_101',
-      name: 'Devendra Rathore',
-      email: 'devendra@example.com',
-      phone: '+91 98765 43210',
-      membership: 'Gold Royal Member',
-      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400',
-      completionRate: 88,
-      credits: 14,
-      role: 'USER'
-    };
+    return null;
   });
 
-  // Auth Modal State
+  // Current page: if user is not authenticated when entering app, default to 'login'
+  const [currentPage, setCurrentPage] = useState(() => {
+    const token = localStorage.getItem('bandhan_token');
+    const user = localStorage.getItem('bandhan_user');
+    return (token && user) ? 'home' : 'login'; // 'login' | 'register' | 'home' | 'browse' | 'connections' | 'profile-builder'
+  });
+
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Auth Modal State (optional popup version)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
 
@@ -73,8 +68,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const openAuthModal = (mode = 'login') => {
-    setAuthModalMode(mode);
-    setIsAuthModalOpen(true);
+    navigateTo(mode);
   };
 
   const closeAuthModal = () => {
@@ -97,7 +91,7 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('bandhan_user', JSON.stringify(formattedUser));
     localStorage.setItem('bandhan_token', token);
     setIsAuthModalOpen(false);
-    showToast(`Welcome back, ${formattedUser.name}!`, 'success');
+    showToast(`Welcome, ${formattedUser.name}!`, 'success');
   };
 
   const logout = () => {
@@ -106,6 +100,7 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('bandhan_user');
     localStorage.removeItem('bandhan_token');
     showToast('You have been securely signed out.', 'info');
+    navigateTo('login');
   };
 
   const toggleShortlist = (id) => {
@@ -119,7 +114,7 @@ export const AppProvider = ({ children }) => {
 
   const sendInterest = (id) => {
     if (!currentUser) {
-      openAuthModal('login');
+      navigateTo('login');
       showToast('Please sign in to send an interest', 'info');
       return;
     }

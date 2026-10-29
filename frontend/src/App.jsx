@@ -8,12 +8,18 @@ import { HomePage } from './pages/HomePage';
 import { BrowsePage } from './pages/BrowsePage';
 import { ConnectionsPage } from './pages/ConnectionsPage';
 import { ProfileBuilderPage } from './pages/ProfileBuilderPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 const AppContent = () => {
   const { currentPage } = useApp();
 
   const renderCurrentPage = () => {
     switch (currentPage) {
+      case 'login':
+        return <LoginPage />;
+      case 'register':
+        return <RegisterPage />;
       case 'home':
         return <HomePage />;
       case 'browse':
