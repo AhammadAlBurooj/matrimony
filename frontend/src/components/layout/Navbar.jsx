@@ -12,7 +12,8 @@ import {
   Bookmark,
   LogIn,
   UserPlus,
-  LogOut
+  LogOut,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -142,6 +143,19 @@ export const Navbar = () => {
               )}
             </button>
 
+            {/* Excel Sheet Download Button */}
+            <a
+              href="http://localhost:5000/api/auth/export-excel"
+              target="_blank"
+              rel="noopener noreferrer"
+              download="Salafi_Matrimony_Registrations.xlsx"
+              title="Download All Registrations (Excel Sheet)"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100 hover:text-emerald-800 transition-all cursor-pointer shadow-xs"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span className="hidden sm:inline">Excel Sheet</span>
+            </a>
+
             {/* If Authenticated: User Capsule */}
             {currentUser ? (
               <div className="relative">
@@ -196,6 +210,15 @@ export const Navbar = () => {
                       <MessageCircle className="w-4 h-4 text-gray-400" />
                       Chats & Received Requests
                     </button>
+
+                    <a
+                      href="http://localhost:5000/api/auth/export-excel"
+                      download="Salafi_Matrimony_Registrations.xlsx"
+                      className="w-full text-left px-4 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                      Export All Data to Excel (.xlsx)
+                    </a>
                     
                     <div className="border-t border-gray-100 mt-1 pt-1">
                       <button
@@ -288,6 +311,14 @@ export const Navbar = () => {
 
             {/* Mobile Auth Actions */}
             <div className="pt-3 border-t border-gray-100 px-2 space-y-2">
+              <a
+                href="http://localhost:5000/api/auth/export-excel"
+                download="Salafi_Matrimony_Registrations.xlsx"
+                className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Download Excel Sheet (.xlsx)</span>
+              </a>
               {currentUser ? (
                 <button
                   onClick={() => {

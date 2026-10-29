@@ -18,6 +18,7 @@ Backend/.env.*.local
 
 # Local DB Runtime Data
 Backend/data/
+*.xlsx
 
 # Production & Build Outputs
 dist/

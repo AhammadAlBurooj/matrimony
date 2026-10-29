@@ -2,9 +2,21 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const db = require('../db');
+const excelService = require('../services/excelService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'bandhan_super_secret_jwt_key_2026';
+
+// Synchronize existing users to Excel upon server startup
+try {
+  const localDb = db.getLocalDb();
+  if (localDb && localDb.users) {
+    excelService.writeUsersToExcel(localDb.users);
+  }
+} catch (e) {
+  console.warn('[Excel Initial Sync Warning]:', e.message);
+}
 
 // Middleware to authenticate JWT token
 const authenticateToken = (req, res, next) => {
@@ -24,7 +36,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// 1. REGISTER USER (Supports Salafi Matchmaking 4-Step Profile)
+// 1. REGISTER USER (Supports Salafi Matchmaking 4-Step Profile + Auto Excel Storage)
 router.post('/register', async (req, res) => {
   const {
     name,
@@ -104,6 +116,13 @@ router.post('/register', async (req, res) => {
     );
 
     const newUser = result.rows[0];
+
+    // Automatically record & append this user to the Excel Spreadsheet
+    try {
+      excelService.appendUserToExcel(newUser);
+    } catch (excelErr) {
+      console.error('[Excel Auto-Save Error]:', excelErr.message);
+    }
 
     // Generate JWT Token
     const token = jwt.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -192,6 +211,29 @@ router.get('/me', authenticateToken, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. DOWNLOAD / EXPORT ALL DATA AS EXCEL (.XLSX)
+router.get('/export-excel', async (req, res) => {
+  try {
+    const localDb = db.getLocalDb();
+    const users = localDb.users || [];
+
+    // Ensure Excel file is up to date with latest data
+    excelService.writeUsersToExcel(users);
+
+    const filePath = excelService.getExcelFilePath();
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=Salafi_Matrimony_Registrations.xlsx');
+      return res.download(filePath, 'Salafi_Matrimony_Registrations.xlsx');
+    } else {
+      return res.status(404).json({ error: 'Excel file not found.' });
+    }
+  } catch (err) {
+    console.error('Export Excel error:', err.message);
+    res.status(500).json({ error: 'Failed to export Excel spreadsheet.' });
   }
 });
 
