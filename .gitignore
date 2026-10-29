@@ -16,6 +16,9 @@ Backend/.env.*.local
 !Backend/.env.example
 !frontend/.env.example
 
+# Local DB Runtime Data
+Backend/data/
+
 # Production & Build Outputs
 dist/
 dist-ssr/

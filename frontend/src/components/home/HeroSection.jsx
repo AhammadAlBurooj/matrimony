@@ -13,7 +13,7 @@ import {
 import { QuickSearchCard } from './QuickSearchCard';
 
 export const HeroSection = () => {
-  const { navigateTo } = useApp();
+  const { navigateTo, openAuthModal, currentUser } = useApp();
 
   return (
     <section className="relative overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24 bg-gradient-to-b from-rose-50/60 via-amber-50/20 to-[#FAFAFA]">
@@ -60,7 +60,7 @@ export const HeroSection = () => {
           </button>
 
           <button
-            onClick={() => navigateTo('profile-builder')}
+            onClick={() => currentUser ? navigateTo('profile-builder') : openAuthModal('register')}
             className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-white hover:bg-gray-50 text-gray-800 font-bold text-sm border border-gray-200 shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600" />

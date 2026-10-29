@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MOCK_PROFILES } from '../data/mockData';
 
 const AppContext = createContext(null);
@@ -8,7 +8,39 @@ export const AppProvider = ({ children }) => {
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // Search and filter state (can be initialized from Quick Search on Home)
+  // Authentication State
+  const [authToken, setAuthToken] = useState(() => {
+    return localStorage.getItem('bandhan_token') || null;
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('bandhan_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    // Default logged in demo profile if desired or null
+    return {
+      id: 'usr_demo_101',
+      name: 'Devendra Rathore',
+      email: 'devendra@example.com',
+      phone: '+91 98765 43210',
+      membership: 'Gold Royal Member',
+      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400',
+      completionRate: 88,
+      credits: 14,
+      role: 'USER'
+    };
+  });
+
+  // Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
+
+  // Search and filter state
   const [searchFilters, setSearchFilters] = useState({
     gender: 'female',
     minAge: 24,
@@ -40,6 +72,42 @@ export const AppProvider = ({ children }) => {
     }, 3500);
   };
 
+  const openAuthModal = (mode = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
+  const handleAuthSuccess = (userData, token) => {
+    const formattedUser = {
+      ...userData,
+      membership: userData.membership || 'Gold Royal Member',
+      avatar: userData.avatar || (userData.gender === 'female' 
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'
+        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400'),
+      completionRate: userData.completionRate || 92,
+      credits: userData.credits || 15
+    };
+
+    setCurrentUser(formattedUser);
+    setAuthToken(token);
+    localStorage.setItem('bandhan_user', JSON.stringify(formattedUser));
+    localStorage.setItem('bandhan_token', token);
+    setIsAuthModalOpen(false);
+    showToast(`Welcome back, ${formattedUser.name}!`, 'success');
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setAuthToken(null);
+    localStorage.removeItem('bandhan_user');
+    localStorage.removeItem('bandhan_token');
+    showToast('You have been securely signed out.', 'info');
+  };
+
   const toggleShortlist = (id) => {
     setShortlistedIds((prev) => {
       const exists = prev.includes(id);
@@ -50,6 +118,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const sendInterest = (id) => {
+    if (!currentUser) {
+      openAuthModal('login');
+      showToast('Please sign in to send an interest', 'info');
+      return;
+    }
     if (sentInterests.includes(id)) {
       showToast('Interest already sent to this profile', 'info');
       return;
@@ -86,16 +159,6 @@ export const AppProvider = ({ children }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Mock logged-in user
-  const currentUser = {
-    name: 'Devendra Rathore',
-    id: 'BM9901',
-    membership: 'Gold Royal Member',
-    // avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400',
-    completionRate: 88,
-    credits: 14
-  };
-
   const selectedProfile = MOCK_PROFILES.find((p) => p.id === selectedProfileId) || null;
 
   return (
@@ -123,6 +186,15 @@ export const AppProvider = ({ children }) => {
         toastMessage,
         showToast,
         currentUser,
+        authToken,
+        isAuthenticated: Boolean(currentUser && authToken),
+        handleAuthSuccess,
+        logout,
+        isAuthModalOpen,
+        authModalMode,
+        setAuthModalMode,
+        openAuthModal,
+        closeAuthModal,
         allProfiles: MOCK_PROFILES
       }}
     >
@@ -138,4 +210,3 @@ export const useApp = () => {
   }
   return context;
 };
-

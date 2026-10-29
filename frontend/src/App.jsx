@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { Toast } from './components/common/Toast';
+import { AuthModal } from './components/auth/AuthModal';
 import { HomePage } from './pages/HomePage';
 import { BrowsePage } from './pages/BrowsePage';
 import { ConnectionsPage } from './pages/ConnectionsPage';
@@ -33,6 +34,7 @@ const AppContent = () => {
         {renderCurrentPage()}
       </main>
       <Footer />
+      <AuthModal />
       <Toast />
     </div>
   );

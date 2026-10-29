@@ -164,20 +164,16 @@ npm start
 npm run dev
 ```
 
-#### Backend Health Check
-To test that the backend is running properly:
-```bash
-# Windows PowerShell:
-Invoke-RestMethod -Uri http://localhost:5000/
+#### Backend Health & Auth API Endpoints
+- **Health Check**: `GET http://localhost:5000/`
+- **Register User**: `POST http://localhost:5000/api/auth/register` (body: `{ name, email, phone, password, gender }`)
+- **Login User**: `POST http://localhost:5000/api/auth/login` (body: `{ email, password }`)
+- **Verify Me**: `GET http://localhost:5000/api/auth/me` (header: `Authorization: Bearer <token>`)
 
-# Or cURL:
-curl http://localhost:5000/
-```
-Expected response:
-```json
-{
-  "message": "Welcome to Matrimoney API"
-}
+```bash
+# Quick Registration test via PowerShell:
+$body = @{ name = "Test User"; email = "user@test.com"; phone = "+91 99999 88888"; password = "Password123"; gender = "female" } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:5000/api/auth/register -Method Post -ContentType "application/json" -Body $body
 ```
 
 ---
